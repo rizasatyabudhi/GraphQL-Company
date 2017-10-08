@@ -12,12 +12,25 @@ const users = [
   { id: "27", firstName: "Samantha", age: "21" }
 ];
 
+const CompanyType = new GraphQLObjectType({
+  name: "Company",
+  fields: {
+    id: { type: GraphQLString },
+    name: { type: GraphQLString },
+    description: { type: GraphQLString }
+  }
+});
+
 const UserType = new GraphQLObjectType({
   name: "User",
   fields: {
     id: { type: GraphQLString },
     firstName: { type: GraphQLString },
-    age: { type: GraphQLInt }
+    age: { type: GraphQLInt },
+    // Make relation between user and company
+    company: {
+      type: CompanyType
+    }
   }
 });
 
