@@ -5,7 +5,13 @@
 const graphql = require("graphql");
 const _ = require("lodash");
 const axios = require("axios");
-const { GraphQLObjectType, GraphQLString, GraphQLInt, GraphQLSchema } = graphql;
+const {
+  GraphQLObjectType,
+  GraphQLString,
+  GraphQLInt,
+  GraphQLSchema,
+  GraphQLList
+} = graphql;
 
 const users = [
   { id: "23", firstName: "Bill", age: "20" },
@@ -17,7 +23,17 @@ const CompanyType = new GraphQLObjectType({
   fields: {
     id: { type: GraphQLString },
     name: { type: GraphQLString },
-    description: { type: GraphQLString }
+    description: { type: GraphQLString },
+    users: {
+      // for 1 to Many relationship
+      type: new GraphQLList(UserType),
+      // parentValue == instance of company that we currently working with
+      resolve(parentValue, args) {
+        return axios
+          .get(`http://localhost:3000/companies/${parentValue.id}/users`)
+          .then(res => res.data);
+      }
+    }
   }
 });
 
@@ -29,7 +45,12 @@ const UserType = new GraphQLObjectType({
     age: { type: GraphQLInt },
     // Make relation between user and company
     company: {
-      type: CompanyType
+      type: CompanyType,
+      resolve(parentValue, args) {
+        return axios
+          .get(`http://localhost:3000/companies/${parentValue.companyId}`)
+          .then(res => res.data);
+      }
     }
   }
 });
@@ -51,8 +72,17 @@ const RootQuery = new GraphQLObjectType({
           axios
             .get(`http://localhost:3000/users/${args.id}`)
             // We need to target the "data" inside the response
-            .then(resp => resp.data)
+            .then(res => res.data)
         );
+      }
+    },
+    company: {
+      type: CompanyType,
+      args: { id: { type: GraphQLString } },
+      resolve(parentValue, args) {
+        return axios
+          .get(`http://localhost:3000/companies/${args.id}`)
+          .then(res => res.data);
       }
     }
   }
